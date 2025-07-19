@@ -6,9 +6,9 @@ import com.example.batch.reader.SqlFileItemReader;
 import com.example.batch.writer.RestApiWriter;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.job.builder.JobBuilder;
-import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
+import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
+import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.retry.support.RetryTemplate;
@@ -18,9 +18,18 @@ import org.springframework.web.client.RestTemplate;
 @EnableBatchProcessing
 public class BatchConfig {
 
+    private final JobBuilderFactory jobBuilderFactory;
+    private final StepBuilderFactory stepBuilderFactory;
+
+    public BatchConfig(JobBuilderFactory jobBuilderFactory,
+                       StepBuilderFactory stepBuilderFactory) {
+        this.jobBuilderFactory = jobBuilderFactory;
+        this.stepBuilderFactory = stepBuilderFactory;
+    }
+
     @Bean
     public Job restSubmitJob(JobCompletionListener listener, Step readAndSubmitStep) {
-        return new JobBuilder("restSubmitJob")
+        return jobBuilderFactory.get("restSubmitJob")
                 .listener(listener)
                 .start(readAndSubmitStep)
                 .build();
@@ -28,7 +37,7 @@ public class BatchConfig {
 
     @Bean
     public Step readAndSubmitStep(SqlFileItemReader reader, RestApiWriter writer) {
-        return new StepBuilder("readAndSubmitStep")
+        return stepBuilderFactory.get("readAndSubmitStep")
                 .<CustomerOrderProductDTO, CustomerOrderProductDTO>chunk(10)
                 .reader(reader)
                 .writer(writer)
