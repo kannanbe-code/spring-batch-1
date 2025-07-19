@@ -50,6 +50,30 @@ docker run -p 8080:8080 spring-batch-oracle-job
 
 Import postman/spring-batch-api.postman_collection.json into Postman and hit http://localhost:8081/api/process.
 
+Project Structure:
+
+spring-batch-oracle-rest-job/
+├── src/
+│   ├── main/
+│   │   ├── java/com/example/batch/
+│   │   │   ├── BatchApplication.java
+│   │   │   ├── config/BatchConfig.java
+│   │   │   ├── listener/JobCompletionListener.java
+│   │   │   ├── model/CustomerOrderProductDTO.java
+│   │   │   ├── reader/SqlFileItemReader.java
+│   │   │   └── writer/RestApiWriter.java
+│   │   └── resources/
+│   │       ├── application.yml
+│   │       └── sql/complex_query.sql
+│   ├── test/
+│   │   └── java/com/example/batch/BatchApplicationTests.java
+│
+├── Dockerfile
+├── README.md
+├── pom.xml
+├── postman/spring-batch-api.postman_collection.json
+└── test-data/test-data.sql
+
 Batch Details:
 
 Reads using JdbcTemplate + SQL file
