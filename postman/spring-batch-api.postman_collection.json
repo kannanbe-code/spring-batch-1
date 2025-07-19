@@ -1,0 +1,26 @@
+{
+  "info": {
+    "name": "Spring Batch API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Submit Batch Items",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "[{ \"customerName\": \"John Doe\", \"productName\": \"Laptop\", \"quantity\": 2, \"orderDate\": \"2024-07-01\" }]"
+        },
+        "url": {
+          "raw": "http://localhost:8081/api/process",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8081",
+          "path": ["api", "process"]
+        }
+      }
+    }
+  ]
+}
