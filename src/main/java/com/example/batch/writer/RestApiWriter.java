@@ -1,8 +1,8 @@
 package com.example.batch.writer;
 
 import com.example.batch.model.CustomerOrderProductDTO;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
@@ -19,17 +19,23 @@ import java.util.List;
 /**
  * Custom ItemWriter to send each DTO to a REST API.
  * Uses RetryTemplate for resiliency and logs errors to a local file.
+ *
+ * Writer class responsible for submitting CustomerOrderProductDTO items
+ * to an external REST API endpoint in JSON format.
+ *
+ * It supports retry using RetryTemplate and logs all outcomes.
  */
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class RestApiWriter implements ItemWriter<CustomerOrderProductDTO> {
-
-    private static final Logger logger = LoggerFactory.getLogger(RestApiWriter.class);
 
     private final RestTemplate restTemplate;
     private final RetryTemplate retryTemplate;
 
-    @Value("${api.endpoint.url}")
-    private String apiUrl;
+    // REST endpoint URL to which the data will be posted
+    @Value("${app.rest.endpoint}")
+    private String endpointUrl;
 
     private static final String FAILED_FILE = "failed-records.txt";
 
@@ -50,14 +56,14 @@ public class RestApiWriter implements ItemWriter<CustomerOrderProductDTO> {
             try {
                 // Use RetryTemplate to handle transient errors like timeouts
                 retryTemplate.execute(context -> {
-                    logger.debug("Submitting to API: {}", item);
+                    log.debug("Submitting record to API: {}", item);
                     restTemplate.postForEntity(apiUrl, item, String.class);
                     return null;
                 });
-                logger.info("Successfully submitted: {}", item.getOrderId());
+                logger.info("Successfully submitted item: {}", item.getOrderId());
 
             } catch (RestClientException e) {
-                logger.error("Failed to submit item after retries: {}", item, e);
+                log.error("Failed to post item {} after retries. Error: {}", item.getOrderId(), e.getMessage(), e);
                 writeFailedItemToFile(item);
             }
         }
