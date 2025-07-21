@@ -3,13 +3,12 @@ package com.example.batch.config;
 import com.example.batch.job.RestApiWriter;
 import com.example.batch.job.SqlFileItemReader;
 import com.example.batch.listener.CustomStepExecutionListener;
-import com.example.batch.model.CustomerRecord;
+import com.example.batch.model.CustomerOrderProductDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
-import org.springframework.batch.core.job.builder.JobBuilderHelper;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
@@ -24,6 +23,10 @@ import org.springframework.transaction.PlatformTransactionManager;
  * - Job and Step
  * - Custom reader, processor, writer
  * - Retry and listener logic
+ * - Chunk-oriented processing using CustomerOrderProductDTO
+ * - Retry mechanism for REST calls
+ * - Custom SQL file reader
+ * - Step listener for auditing
  */
 @Slf4j
 @Configuration
@@ -33,50 +36,51 @@ public class BatchConfig {
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
 
-    private final SqlFileItemReader itemReader;
-    private final RestApiWriter itemWriter;
+    private final SqlFileItemReader sqlFileItemReader;
+    private final RestApiWriter restApiWriter;
 
      /**
      * Defines the main Spring Batch job.
      * 
      * - Uses an incrementer to allow multiple runs
      * - Starts with the single step
+     * - Executes the below step
+     * - Uses RunIdIncrementer to avoid job instance collision
      */
-    @Bean
-    public Job customerJob() {
-        return new JobBuilder("customerJob", jobRepository)
+     @Bean
+    public Job customerOrderJob() {
+        return new JobBuilder("customerOrderJob", jobRepository)
                 .incrementer(new RunIdIncrementer())
-                .start(customerStep())
+                .start(customerOrderStep())
                 .build();
     }
 
     /**
-     * Defines the main Spring Batch step.
-     * 
-     * - Uses chunk-based processing
-     * - Applies reader, processor, writer
-     * - Attaches custom listener
+     * Defines the batch step:
+     * - Reads from SQL file
+     * - Processes data
+     * - Writes to REST endpoint
+     * - Includes retry and step listener
      */
     @Bean
-    public Step customerStep() {
-        return new StepBuilder("customerStep", jobRepository)
-                .<CustomerRecord, CustomerRecord>chunk(10, transactionManager)
-                .reader(itemReader)
+    public Step customerOrderStep() {
+        return new StepBuilder("customerOrderStep", jobRepository)
+                .<CustomerOrderProductDTO, CustomerOrderProductDTO>chunk(10, transactionManager)
+                .reader(sqlFileItemReader)
                 .processor(itemProcessor())
-                .writer(itemWriter)
+                .writer(restApiWriter)
                 .listener(new CustomStepExecutionListener())
                 .build();
     }
 
      /**
-     * Defines the processor to apply transformations or validations.
-     * 
-     * @return ItemProcessor instance for CustomerRecord
+     * Optional processor that could be used for transformation or filtering.
+     * In this case, it just returns the input as-is.
      */
     @Bean
-    public ItemProcessor<CustomerRecord, CustomerRecord> itemProcessor() {
+    public ItemProcessor<CustomerOrderProductDTO, CustomerOrderProductDTO> itemProcessor() {
         return item -> {
-            // You can add filtering or transformation here if needed
+            // Add validation or transformation logic here if needed
             return item;
         };
     }
