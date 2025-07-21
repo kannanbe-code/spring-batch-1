@@ -7,6 +7,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 /**
  * Main entry point for the Spring Boot application.
  * Also enables Spring scheduling.
+ *- Uses @EnableScheduling to activate Spring's scheduled task execution.
  */
 @SpringBootApplication
 @EnableScheduling
