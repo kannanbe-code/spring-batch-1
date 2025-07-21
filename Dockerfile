@@ -1,4 +1,14 @@
+# Use official OpenJDK base image
 FROM openjdk:17-jdk-slim
-VOLUME /tmp
-COPY target/spring-batch-oracle-rest-job-1.0.0.jar app.jar
-ENTRYPOINT ["java","-jar","/app.jar"]
+
+# Set working directory
+WORKDIR /app
+
+# Copy the executable JAR
+COPY target/spring-batch-oracle-rest-job.jar app.jar
+
+# Expose default port
+EXPOSE 8080
+
+# Run Spring Boot app
+ENTRYPOINT ["java", "-jar", "app.jar"]
