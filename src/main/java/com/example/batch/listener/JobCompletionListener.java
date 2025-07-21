@@ -1,7 +1,6 @@
 package com.example.batch.listener;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.JobExecution;
@@ -11,11 +10,12 @@ import org.springframework.stereotype.Component;
 /**
  * Listener for job lifecycle events.
  * Used to audit and log job execution status, summaries, and metrics.
+ *
+ * Listener to perform logging and auditing before and after each step execution.
  */
+@Slf4j
 @Component
 public class JobCompletionListener implements JobExecutionListener {
-
-    private static final Logger logger = LoggerFactory.getLogger(JobCompletionListener.class);
 
     /**
      * Invoked before job starts.
@@ -24,7 +24,7 @@ public class JobCompletionListener implements JobExecutionListener {
      */
     @Override
     public void beforeJob(JobExecution jobExecution) {
-        logger.info(">>> Job started: {}", jobExecution.getJobInstance().getJobName());
+        log.info(">>> Job started: {}", jobExecution.getJobInstance().getJobName());
     }
 
     /**
@@ -34,14 +34,14 @@ public class JobCompletionListener implements JobExecutionListener {
      */
     @Override
     public void afterJob(JobExecution jobExecution) {
-        logger.info("<<< Job finished. Status: {}, Exit: {}",
+        log.info("<<< Job finished. Status: {}, Exit: {}",
                 jobExecution.getStatus(), jobExecution.getExitStatus());
 
         if (jobExecution.getStatus() == BatchStatus.COMPLETED) {
-            logger.info("✔ SUCCESS: Job completed with {} step(s).", jobExecution.getStepExecutions().size());
+            log.info("✔ SUCCESS: Job completed with {} step(s).", jobExecution.getStepExecutions().size());
 
             jobExecution.getStepExecutions().forEach(stepExecution -> {
-                logger.info(" - Step [{}] processed {} items (read: {}, written: {}, skipped: {})",
+                log.info(" - Step [{}] processed {} items (read: {}, written: {}, skipped: {})",
                         stepExecution.getStepName(),
                         stepExecution.getWriteCount(),
                         stepExecution.getReadCount(),
@@ -49,12 +49,12 @@ public class JobCompletionListener implements JobExecutionListener {
                         stepExecution.getSkipCount());
             });
         } else if (jobExecution.getStatus() == BatchStatus.FAILED) {
-            logger.error("✖ FAILURE: Job failed with exit code [{}] and message: {}",
+            log.error("✖ FAILURE: Job failed with exit code [{}] and message: {}",
                     jobExecution.getExitStatus().getExitCode(),
                     jobExecution.getExitStatus().getExitDescription());
 
             jobExecution.getAllFailureExceptions().forEach(ex -> {
-                logger.error(" - Exception: {}", ex.getMessage(), ex);
+                log.error(" - Exception: {}", ex.getMessage(), ex);
             });
         }
     }
