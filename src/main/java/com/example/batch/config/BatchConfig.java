@@ -1,72 +1,84 @@
 package com.example.batch.config;
 
-import com.example.batch.listener.JobCompletionListener;
-import com.example.batch.model.CustomerOrderProductDTO;
-import com.example.batch.reader.SqlFileItemReader;
-import com.example.batch.writer.RestApiWriter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.example.batch.job.RestApiWriter;
+import com.example.batch.job.SqlFileItemReader;
+import com.example.batch.listener.CustomStepExecutionListener;
+import com.example.batch.model.CustomerRecord;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.job.builder.JobBuilderHelper;
+import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.item.ItemProcessor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.web.client.RestTemplate;
 
 /**
- * Spring Batch configuration for defining jobs and steps.
- * This class is fully compatible with Spring Batch 5.x and avoids deprecated APIs.
+ * Spring Batch configuration class that defines:
+ * - Job and Step
+ * - Custom reader, processor, writer
+ * - Retry and listener logic
  */
+@Slf4j
 @Configuration
+@RequiredArgsConstructor
 public class BatchConfig {
 
-    private static final Logger logger = LoggerFactory.getLogger(BatchConfig.class);
+    private final JobRepository jobRepository;
+    private final PlatformTransactionManager transactionManager;
 
-    /**
-     * Defines the batch job that includes a single step.
-     *
-     * @param jobRepository the JobRepository required by Spring Batch 5
-     * @param listener      job-level listener for auditing
-     * @param readAndSubmitStep the main step that reads data and submits to REST API
-     * @return configured Job
+    private final SqlFileItemReader itemReader;
+    private final RestApiWriter itemWriter;
+
+     /**
+     * Defines the main Spring Batch job.
+     * 
+     * - Uses an incrementer to allow multiple runs
+     * - Starts with the single step
      */
     @Bean
-    public Job restSubmitJob(JobRepository jobRepository,
-                              JobCompletionListener listener,
-                              Step readAndSubmitStep) {
-        logger.info("Creating Job: restSubmitJob");
-
-        return new JobBuilder("restSubmitJob", jobRepository)
-                .listener(listener)         // Listener for logging and auditing
-                .start(readAndSubmitStep)   // Single step job
+    public Job customerJob() {
+        return new JobBuilder("customerJob", jobRepository)
+                .incrementer(new RunIdIncrementer())
+                .start(customerStep())
                 .build();
     }
 
     /**
-     * Defines the step to read data from SQL file and write to REST API.
-     *
-     * @param jobRepository Spring Batch 5.x JobRepository
-     * @param transactionManager manages transaction for chunk processing
-     * @param reader custom reader that executes a SQL file
-     * @param writer custom writer that submits data to REST API
-     * @return configured Step
+     * Defines the main Spring Batch step.
+     * 
+     * - Uses chunk-based processing
+     * - Applies reader, processor, writer
+     * - Attaches custom listener
      */
     @Bean
-    public Step readAndSubmitStep(JobRepository jobRepository,
-                                  PlatformTransactionManager transactionManager,
-                                  SqlFileItemReader reader,
-                                  RestApiWriter writer) {
-        logger.info("Creating Step: readAndSubmitStep");
-
-        return new StepBuilder("readAndSubmitStep", jobRepository)
-                .<CustomerOrderProductDTO, CustomerOrderProductDTO>chunk(10, transactionManager)
-                .reader(reader)
-                .writer(writer)
+    public Step customerStep() {
+        return new StepBuilder("customerStep", jobRepository)
+                .<CustomerRecord, CustomerRecord>chunk(10, transactionManager)
+                .reader(itemReader)
+                .processor(itemProcessor())
+                .writer(itemWriter)
+                .listener(new CustomStepExecutionListener())
                 .build();
+    }
+
+     /**
+     * Defines the processor to apply transformations or validations.
+     * 
+     * @return ItemProcessor instance for CustomerRecord
+     */
+    @Bean
+    public ItemProcessor<CustomerRecord, CustomerRecord> itemProcessor() {
+        return item -> {
+            // You can add filtering or transformation here if needed
+            return item;
+        };
     }
 
     /**
