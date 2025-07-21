@@ -1,8 +1,9 @@
-SELECT c.name AS customerName,
-       p.name AS productName,
-       o.quantity,
-       TO_CHAR(o.order_date, 'YYYY-MM-DD') AS orderDate
-FROM customers c
-JOIN orders o ON c.id = o.customer_id
-JOIN products p ON o.product_id = p.id
-WHERE o.status = 'CONFIRMED';
+SELECT o.order_id,
+       c.name AS customer_name,
+       p.product_code,
+       oi.quantity,
+       p.price
+  FROM orders o
+  JOIN customers c ON o.customer_id = c.customer_id
+  JOIN order_items oi ON o.order_id = oi.order_id
+  JOIN products p ON oi.product_id = p.product_id
