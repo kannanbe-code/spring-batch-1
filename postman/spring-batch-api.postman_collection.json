@@ -1,26 +1,33 @@
 {
   "info": {
-    "name": "Spring Batch API",
+    "name": "REST API Batch Submission",
+    "_postman_id": "d37eafdf-f9be-4f0f-8a50-b7b1a1de1c55",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "Submit Batch Items",
+      "name": "Submit Order Item",
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "body": {
-          "mode": "raw",
-          "raw": "[{ \"customerName\": \"John Doe\", \"productName\": \"Laptop\", \"quantity\": 2, \"orderDate\": \"2024-07-01\" }]"
-        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "url": {
-          "raw": "http://localhost:8081/api/process",
+          "raw": "http://localhost:8081/api/orders",
           "protocol": "http",
           "host": ["localhost"],
           "port": "8081",
-          "path": ["api", "process"]
+          "path": ["api", "orders"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"orderId\": 101,\n  \"customerName\": \"Alice\",\n  \"productCode\": \"P001\",\n  \"quantity\": 2,\n  \"price\": 99.99\n}"
         }
-      }
+      },
+      "response": []
     }
   ]
 }
