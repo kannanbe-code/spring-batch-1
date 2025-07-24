@@ -1,0 +1,44 @@
+# Root Spring Boot Configuration
+spring:
+
+  datasource:
+    url: jdbc:oracle:thin:@localhost:1521/XEPDB1 # Replace with your actual Oracle connection string
+    username: batch_user                           # Replace with your Oracle username
+    password: batch_password                       # Replace with your Oracle password
+    driver-class-name: oracle.jdbc.OracleDriver
+
+  # Enables SQL schema file execution at startup
+  sql:
+    init:
+      mode: always                                  # Always run schema scripts on startup
+      schema-locations: classpath:schema-batch-oracle.sql  # Location of Spring Batch schema for Oracle
+      continue-on-error: true                       # Avoid startup failure if tables already exist
+
+  # Spring Batch specific settings
+  batch:
+    job:
+      enabled: false                                # Prevents jobs from auto-executing on startup. We use a scheduler or manual trigger.
+    jdbc:
+      initialize-schema: never                      # Disable Spring Boot's auto-initialization. We're using spring.sql.init above instead.
+
+# Logging configuration
+logging:
+  level:
+    root: INFO
+    com.example.batch: DEBUG                        # Fine-grained logging for your package
+  file:
+    name: logs/app.log                               # Location of your log file
+
+# Scheduler configuration
+scheduler:
+  cron: "0 0/5 * * * ?"                             # Run every 5 minutes (CRON format)
+
+# Retry mechanism settings
+retry:
+  max-attempts: 3                                   # Number of retry attempts
+  delay: 2000                                       # Delay between retries in milliseconds
+
+# REST endpoint configuration for posting data
+rest:
+  endpoint:
+    url: https://api.example.com/orders             # Endpoint to which batch data is posted
