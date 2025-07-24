@@ -1,4 +1,4 @@
-# Shared base configuration
+# application.yml - Base file that activates a specific profile
 spring:
   profiles:
-    active: dev  # Set active profile here (dev, prod, test)
+    active: dev # Change this to 'prod', 'test' as needed to switch environments
