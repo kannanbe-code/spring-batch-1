@@ -1,0 +1,4 @@
+# Shared base configuration
+spring:
+  profiles:
+    active: dev  # Set active profile here (dev, prod, test)
