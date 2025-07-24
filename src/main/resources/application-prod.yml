@@ -1,0 +1,36 @@
+# application-prod.yml - Production environment configuration
+
+spring:
+  datasource:
+    url: jdbc:oracle:thin:@prod-host:1521/PRODDB     # Oracle DB for production
+    username: prod_user
+    password: prod_password
+    driver-class-name: oracle.jdbc.OracleDriver
+
+  sql:
+    init:
+      mode: never                                     # Don't auto-run schema creation scripts in prod
+
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: never
+
+logging:
+  level:
+    root: WARN
+    com.example.batch: INFO
+  file:
+    name: logs/app-prod.log                          # Production log output file
+
+scheduler:
+  cron: "0 0 * * * ?"                                # Cron expression: every hour
+
+retry:
+  max-attempts: 5                                    # More aggressive retry in production
+  delay: 5000                                        # 5 seconds between retries
+
+rest:
+  endpoint:
+    url: https://api.example.com/orders              # Live API endpoint
