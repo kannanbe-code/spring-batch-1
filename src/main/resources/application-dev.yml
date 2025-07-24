@@ -1,44 +1,38 @@
-# Root Spring Boot Configuration
+# application-dev.yml - Development environment configuration
+
 spring:
-
   datasource:
-    url: jdbc:oracle:thin:@localhost:1521/XEPDB1 # Replace with your actual Oracle connection string
-    username: batch_user                           # Replace with your Oracle username
-    password: batch_password                       # Replace with your Oracle password
-    driver-class-name: oracle.jdbc.OracleDriver
+    url: jdbc:oracle:thin:@localhost:1521/XEPDB1  # Oracle DB URL for dev
+    username: batch_user                           # DB username
+    password: batch_password                       # DB password
+    driver-class-name: oracle.jdbc.OracleDriver    # Oracle JDBC driver
 
-  # Enables SQL schema file execution at startup
   sql:
     init:
-      mode: always                                  # Always run schema scripts on startup
-      schema-locations: classpath:schema-batch-oracle.sql  # Location of Spring Batch schema for Oracle
-      continue-on-error: true                       # Avoid startup failure if tables already exist
+      mode: always                                  # Always run SQL init scripts on startup
+      schema-locations: classpath:schema-batch-oracle.sql  # Path to Spring Batch schema script
+      continue-on-error: true                       # Skip errors if schema already exists
 
-  # Spring Batch specific settings
   batch:
     job:
-      enabled: false                                # Prevents jobs from auto-executing on startup. We use a scheduler or manual trigger.
+      enabled: false                                # Don't auto-start jobs; launch manually or via scheduler
     jdbc:
-      initialize-schema: never                      # Disable Spring Boot's auto-initialization. We're using spring.sql.init above instead.
+      initialize-schema: never                      # Let us control schema creation using sql.init
 
-# Logging configuration
 logging:
   level:
-    root: INFO
-    com.example.batch: DEBUG                        # Fine-grained logging for your package
+    root: INFO                                      # General logging level
+    com.example.batch: DEBUG                        # Project-specific debug level
   file:
-    name: logs/app.log                               # Location of your log file
+    name: logs/app-dev.log                          # Output log file for development
 
-# Scheduler configuration
 scheduler:
-  cron: "0 0/5 * * * ?"                             # Run every 5 minutes (CRON format)
+  cron: "0 0/5 * * * ?"                             # Cron expression: run job every 5 minutes
 
-# Retry mechanism settings
 retry:
-  max-attempts: 3                                   # Number of retry attempts
-  delay: 2000                                       # Delay between retries in milliseconds
+  max-attempts: 3                                   # Retry failed REST calls up to 3 times
+  delay: 2000                                       # 2-second delay between retries
 
-# REST endpoint configuration for posting data
 rest:
   endpoint:
-    url: https://api.example.com/orders             # Endpoint to which batch data is posted
+    url: https://dev-api.example.com/orders         # Target REST endpoint for JSON submission
