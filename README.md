@@ -12,6 +12,69 @@ This Spring Batch application:
 - Writes failures to a file
 - Supports Oracle DB, Docker, and Postman collection
 
+# Spring Batch Oracle to REST API Project
+
+This project reads data from an Oracle database using complex SQL joins, chunks and sends records to a REST API in JSON format, with retry, error fallback, scheduler, and auditing.
+
+---
+
+## 🔧 Features
+
+- Spring Batch 5.x (no deprecated APIs)
+- Chunk-oriented processing
+- SQL file-based item reader (complex joins)
+- REST submission (with retry + fallback)
+- Exception handling + logging
+- Email or file fallback for failed items
+- Step-level auditing with `StepExecutionListener`
+- Spring Scheduler (cron-driven execution)
+- Multi-environment support (dev, test, prod)
+- Oracle DB with batch schema + test data
+- JUnit test coverage with `application-test.yml`
+- Dockerfile + Docker Compose support
+- Lombok-based clean code
+
+---
+
+## 🔁 Profiles Setup
+
+| Profile | DB         | Scheduler | Schema Init | REST Endpoint |
+|---------|------------|-----------|-------------|----------------|
+| dev     | Oracle     | Every 5m  | Enabled     | Dev API        |
+| prod    | Oracle     | Hourly    | Disabled    | Prod API       |
+| test    | H2 (in-mem)| Every min | Enabled     | Mock endpoint  |
+
+---
+
+## 🚀 How to Run
+
+```bash
+# Default profile (dev)
+mvn spring-boot:run
+
+# For test or prod
+mvn spring-boot:run -Dspring.profiles.active=test
+
+# Run JUnit tests with test profile
+mvn test -Dspring.profiles.active=test
+
+# Build image
+docker build -t spring-batch-app .
+
+# Run with docker-compose
+docker-compose --profile dev up
+
+📂 Configuration Files
+All configuration files are inside src/main/resources/:
+
+application.yml — base profile activator
+
+application-dev.yml — dev environment
+
+application-prod.yml — production environment
+
+application-test.yml — test (JUnit + H2)
+
 ## 💻 Technologies
 - Spring Boot 3.1.5
 - Spring Batch
