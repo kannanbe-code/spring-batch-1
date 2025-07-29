@@ -11,6 +11,8 @@ import org.springframework.batch.item.file.FlatFileParseException;
 @Slf4j
 public class CustomSkipPolicy implements SkipPolicy {
 
+    private static final int MAX_SKIP_COUNT = 5;
+
     /**
      * This method is called by Spring Batch when an exception is thrown during a chunk operation.
      *
@@ -30,8 +32,13 @@ public class CustomSkipPolicy implements SkipPolicy {
 
         // Skip a custom validation exception (user-defined)
         if (throwable instanceof com.example.batch.exception.InvalidCustomerDataException) {
-            log.warn("Skipping record due to invalid customer data. Total skips so far: {}", skipCount);
-            return true;
+            if (skipCount < MAX_SKIP_COUNT) {
+                log.info("Skipping due to invalid data. skipCount = {}", skipCount);
+                return true;
+            } else {
+                log.error("Exceeded max skip count ({}) for InvalidCustomerDataException", MAX_SKIP_COUNT);
+                return false;
+            }
         }
 
         // All other exceptions will cause the step to fail
