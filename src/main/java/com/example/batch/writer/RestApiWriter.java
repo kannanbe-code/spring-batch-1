@@ -51,24 +51,34 @@ public class RestApiWriter implements ItemWriter<CustomerOrderProductDTO> {
      * @param items chunk of DTOs to submit
      */
     @Override
-    public void write(List<? extends CustomerOrderProductDTO> items) {
-        for (CustomerOrderProductDTO item : items) {
-            try {
-                // Use RetryTemplate to handle transient errors like timeouts
-                retryTemplate.execute(context -> {
-                    log.debug("Submitting record to API: {}", item);
-                    restTemplate.postForEntity(apiUrl, item, String.class);
-                    return null;
-                });
-                logger.info("Successfully submitted item: {}", item.getOrderId());
+    public void write(List<? extends String> items) {
+        log.info("Processing {} items for REST API submission", items.size());
 
-            } catch (RestClientException e) {
-                log.error("Failed to post item {} after retries. Error: {}", item.getOrderId(), e.getMessage(), e);
-                writeFailedItemToFile(item);
-            }
+        for (String item : items) {
+            log.debug("Preparing to send item: {}", item);
+
+            retryTemplate.execute((RetryCallback<ResponseEntity<String>, RuntimeException>) context -> {
+                // Create HTTP headers
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                headers.set("X-Request-Source", "SpringBatch");
+                headers.set("X-Retry-Attempt", String.valueOf(context.getRetryCount() + 1));
+                headers.setBearerAuth("your-access-token"); // Replace with dynamic token if needed
+
+                // Wrap the item and headers into HttpEntity
+                HttpEntity<String> requestEntity = new HttpEntity<>(item, headers);
+
+                log.info("Attempt #{} sending item to API: {}", context.getRetryCount() + 1, item);
+
+                // POST request with headers
+                ResponseEntity<String> response = restTemplate.postForEntity(API_URL, requestEntity, String.class);
+
+                log.info("Response for item {}: HTTP {} - {}", item, response.getStatusCode(), response.getBody());
+
+                return response;
+            });
         }
     }
-
     /**
      * Writes a failed item to a local file for audit or reprocessing.
      *
